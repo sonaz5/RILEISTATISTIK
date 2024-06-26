@@ -1,0 +1,93 @@
+
+linear_regression <- function(Y, X) {
+  Y <- as.numeric(Y)
+  X <- as.matrix(as.data.frame(X))
+  # Add intercept term to X matrix
+  X <- cbind(1, X)
+  # Calculate beta_hat (regression coefficients)
+  beta_hat <- solve(t(X) %*% X) %*% t(X) %*% Y
+  # Calculate predicted Y (Y_hat)
+  Y_hat <- X %*% beta_hat
+  # Calculate residuals
+  residuals <- Y - Y_hat
+  # Calculate total sum of squares (TSS)
+  TSS <- sum((Y - mean(Y))^2)
+  # Calculate residual sum of squares (RSS)
+  RSS <- sum(residuals^2)
+  # Calculate regression sum of squares (RMSS)
+  RMSS <- TSS - RSS
+  # Calculate coefficient of determination (R-squared)
+  R_squared <- RMSS / TSS
+  # Output results
+  results <- list(
+    "Intercept" = beta_hat[1],
+    "Coefficients" = beta_hat[-1],
+    "Estimated_Y" = Y_hat,
+    "Residuals" = residuals,
+    "Total Sum of Squares (TSS)" = TSS,
+    "Regression Sum of Squares (RMSS)" = RMSS,
+    "Residual Sum of Squares (RSS)" = RSS,
+    "R-squared" = R_squared
+  )
+  return(results)
+}
+interactive_linear_regression <- function(data) {
+  
+  while(TRUE) {
+    cat("\nLinear Regression Menu:\n")
+    cat("1. Simple Linear Regression\n")
+    cat("2. Multiple Linear Regression\n")
+    cat("3. Exit\n")
+    
+    choice <- as.integer(readline(prompt = "Enter your choice (1, 2, or 3): "))
+    
+    if (choice == 1) {
+      # Simple linear regression
+      variable <- readline(prompt = "Enter the variable for simple linear regression: ")
+      if (!(variable %in% names(data))) {
+        cat("Variable not found in the dataset. Please try again.\n")
+        next
+      }
+      Y <- data$Y
+      X <- data[[variable]]
+      results <- linear_regression(Y, X)
+      print_results(results, variable)
+      
+    } else if (choice == 2) {
+      # Multiple linear regression
+      cat("Enter the variables for multiple linear regression (comma-separated): ")
+      variables <- strsplit(readline(), ",")[[1]]
+      missing_variables <- setdiff(variables, names(data))
+      if (length(missing_variables) > 0) {
+        cat("Some variables not found in the dataset:", paste(missing_variables, collapse = ", "), "\n")
+        next
+      }
+      Y <- data$Y
+      X <- data[, variables, drop = FALSE]
+      results <- linear_regression(Y, X)
+      print_result(results)
+      
+    } else if (choice == 3) {
+      cat("Exiting...\n")
+      break
+      
+    } else {
+      cat("Invalid choice. Please enter 1, 2, or 3.\n")
+    }
+  }
+}
+print_result <- function(results, variable) {
+  cat("\nRegression Results:\n")
+  cat("\nIntercept:", results$Intercept, "\n")
+  cat("Coefficient for", variable, ":", results$Coefficients, "\n")
+  cat("Estimated Y (Y_hat) for", variable, ":\n")
+  print(results$Estimated_Y)
+  cat("\nTotal Sum of Squares (TSS):", results$`Total Sum of Squares (TSS)`, "\n")
+  cat("Regression Sum of Squares (RMSS):", results$`Regression Sum of Squares (RMSS)`, "\n")
+  cat("Residual Sum of Squares (RSS):", results$`Residual Sum of Squares (RSS)`, "\n")
+  cat("R-squared:", results$`R-squared`, "\n")
+}
+data <- read.table("MultRegData.txt", header = TRUE)
+
+# Perform interactive linear regression
+interactive_linear_regression(data)
