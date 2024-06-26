@@ -1,0 +1,43 @@
+model_selection <- function(data) {
+  library(tidyverse)
+  
+  #generate all possible combinations
+  independent_vars <- names(data)[-1]
+  all_combinations <- lapply(1:length(independent_vars), function(x) combn(independent_vars, x, simplify = FALSE))
+  all_combinations <- unlist(all_combinations, recursive = FALSE)
+  
+  # Initialize dataframe to store results
+  results <- data.frame(Model = character(),
+                        Number_of_Variables = numeric(),
+                        Variable_X_Name = character(),
+                        TSS = numeric(),
+                        RMSS = numeric(),
+                        RSS = numeric(),
+                        R_Square = numeric(),
+                        stringsAsFactors = FALSE)
+  for (i in seq_along(all_combinations)) {
+    model_formula <- as.formula(paste("Y ~", paste(all_combinations[[i]], collapse = " + ")))
+    model <- lm(model_formula, data = data)
+    tss <- sum((data$Y - mean(data$Y))^2)
+    rmss <- sum((predict(model) - mean(data$Y))^2)
+    rss <- sum(model$residuals^2)
+    r_square <- summary(model)$r.squared
+    
+    # Append results to dataframe
+    results <- rbind(results, data.frame(Model = paste("Model", i),
+                                          Number_of_Variables = length(all_combinations[[i]]),
+                                          Variable_X_Name = paste(all_combinations[[i]], collapse = " "),
+                                          TSS = tss,
+                                          RMSS = rmss,
+                                          RSS = rss,
+                                          R_Square = r_square))
+  }
+  
+  #R-squared in descending order
+  results <- results[order(-results$R_Square), ]
+  return(results)
+}
+data <- read.table("MultRegData.txt", header = TRUE)
+
+result <- model_selection(data)
+print(result)
